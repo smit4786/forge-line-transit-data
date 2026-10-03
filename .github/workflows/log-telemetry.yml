@@ -1,0 +1,35 @@
+name: Log transit telemetry
+
+on:
+  schedule:
+    # Every 5 minutes, UTC. Keeps a full day to ~288 polls / ~1 MB.
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Poll proxy and append record
+        run: python scripts/log_poll.py
+
+      - name: Commit new data
+        run: |
+          git config user.name "forge-line-logger"
+          git config user.email "forge-line-logger@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "no new data to commit"
+          else
+            git commit -m "telemetry $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git push
+          fi
