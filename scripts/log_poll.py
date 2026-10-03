@@ -87,6 +87,12 @@ def main():
     dayfile = DATA / (now.strftime("%Y-%m-%d") + ".jsonl")
     with open(dayfile, "a") as f:
         f.write(json.dumps(record, separators=(",", ":")) + "\n")
+    # data/latest.json: the single most recent poll, for instant page paint
+    # and as a lightweight "last known positions" fallback. Small enough to
+    # fetch on every page load (~one poll, not the whole day).
+    with open(DATA / "latest.json", "w") as f:
+        json.dump(record, f, separators=(",", ":"))
+        f.write("\n")
     update_index()
     print(f"appended poll {stamp}: {len(clean)} vehicles -> {dayfile.name}")
 
