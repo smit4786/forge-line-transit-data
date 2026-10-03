@@ -1,11 +1,11 @@
 {
   "schema": "forge-line.telemetry/v1",
-  "index_updated_at": "2026-10-03T04:04:47Z",
+  "index_updated_at": "2026-10-03T05:03:51Z",
   "days": [
     {
       "date": "2026-10-03",
-      "polls": 5,
-      "vehicle_records": 185,
+      "polls": 6,
+      "vehicle_records": 211,
       "path": "data/2026-10-03.jsonl"
     }
   ]
