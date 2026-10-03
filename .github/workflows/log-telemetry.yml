@@ -4,6 +4,7 @@ on:
   schedule:
     # Every 5 minutes, UTC. Keeps a full day to ~288 polls / ~1 MB.
     - cron: "*/5 * * * *"
+    # Re-push 2026-10-03: kick the scheduler; the cron trigger had never fired.
   workflow_dispatch:
 
 permissions:
