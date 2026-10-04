@@ -23,6 +23,9 @@ jobs:
       - name: Poll proxy and append record
         run: python scripts/log_poll.py
 
+      - name: Build endpoint events and timing model
+        run: python scripts/build_timing.py
+
       - name: Commit new data
         run: |
           git config user.name "forge-line-logger"
