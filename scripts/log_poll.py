@@ -6,6 +6,14 @@ per successful poll. Failed polls are never logged as empty records -- a gap
 in the 5-minute cadence means that poll failed or was skipped.
 
 Record format: forge-line.telemetry/v1 (see SCHEMA.md).
+
+Endpoint registry: data/vehicles/registry.json is a persistent per-vehicle
+inventory, updated every successful poll. Each bus is a managed endpoint:
+keyed by vehicle_id, with identity, route assignment, last check-in state,
+and check-in history counters. Vehicles absent from a poll keep their record
+and are marked "quiet" -- the inventory is cumulative, like any endpoint
+manager. This registry (plus the JSONL check-in history) is the foundation
+for empirical point-to-point timing.
 """
 import json
 import sys
@@ -17,6 +25,7 @@ PROXY = "https://forge-line-live-proxy.netlify.app"
 SCHEMA = "forge-line.telemetry/v1"
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
+REGISTRY = DATA / "vehicles" / "registry.json"
 
 
 def fetch():
@@ -50,9 +59,77 @@ def clean_vehicle(v):
         out["bearing"] = v["bearing"]
     if v.get("speed_mph") is not None:
         out["speed_mph"] = v["speed_mph"]
+    if v.get("destination") is not None:
+        out["destination"] = str(v["destination"])
     if v.get("updated_at"):
         out["updated_at"] = v["updated_at"]
     return out
+
+
+def update_registry(clean, stamp):
+    """Maintain the persistent vehicle endpoint registry.
+
+    Read-modify-write per poll: new endpoints are enrolled, known endpoints
+    get fresh check-in state, and endpoints absent from this poll are marked
+    quiet (record retained). Route reassignments are counted -- a bus moving
+    routes is an assignment change, worth knowing about.
+    """
+    REGISTRY.parent.mkdir(parents=True, exist_ok=True)
+    reg = {"vehicles": {}}
+    if REGISTRY.exists():
+        try:
+            reg = json.loads(REGISTRY.read_text())
+        except json.JSONDecodeError:
+            reg = {"vehicles": {}}
+    vehicles = reg.setdefault("vehicles", {})
+    seen = set()
+    for v in clean:
+        vid = v["vehicle_id"]
+        if not vid:
+            continue
+        seen.add(vid)
+        rec = vehicles.get(vid)
+        if rec is None:
+            rec = {
+                "vehicle_id": vid,
+                "agency": v.get("agency", "ddot"),
+                "first_seen": stamp,
+                "checkins": 0,
+                "route_changes": 0,
+            }
+            vehicles[vid] = rec
+        new_route = v.get("route_id", "")
+        old_route = rec.get("route_id", "")
+        if new_route != old_route:
+            if old_route:
+                rec["route_changes"] = rec.get("route_changes", 0) + 1
+                rec["last_route_change"] = stamp
+            rec["route_id"] = new_route
+        rec["agency"] = v.get("agency", rec.get("agency", "ddot"))
+        if v.get("destination") is not None:
+            rec["destination"] = v["destination"]
+        rec["last_seen"] = stamp
+        rec["checkins"] = rec.get("checkins", 0) + 1
+        rec["last_lat"] = v["lat"]
+        rec["last_lon"] = v["lon"]
+        if v.get("speed_mph") is not None:
+            rec["last_speed_mph"] = v["speed_mph"]
+        if v.get("bearing") is not None:
+            rec["last_bearing"] = v["bearing"]
+        if v.get("updated_at"):
+            rec["last_updated_at"] = v["updated_at"]
+        rec["checkin_state"] = "active"
+    for vid, rec in vehicles.items():
+        if vid not in seen:
+            rec["checkin_state"] = "quiet"
+    reg["schema"] = SCHEMA
+    reg["registry_updated_at"] = stamp
+    reg["vehicle_count"] = len(seen)
+    reg["endpoints_total"] = len(vehicles)
+    with open(REGISTRY, "w") as f:
+        json.dump(reg, f, separators=(",", ":"))
+        f.write("\n")
+    return len(seen), len(vehicles)
 
 
 def main():
@@ -93,8 +170,10 @@ def main():
     with open(DATA / "latest.json", "w") as f:
         json.dump(record, f, separators=(",", ":"))
         f.write("\n")
+    active, total = update_registry(clean, stamp)
     update_index()
-    print(f"appended poll {stamp}: {len(clean)} vehicles -> {dayfile.name}")
+    print(f"appended poll {stamp}: {len(clean)} vehicles -> {dayfile.name}; "
+          f"registry: {active} active, {total} endpoints")
 
 
 def update_index():
