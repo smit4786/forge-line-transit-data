@@ -1,1 +1,1 @@
-{"schema":"forge-line.endpoint/v1","built_at":"2026-10-05T19:04:39Z","cells":0,"segments":{}}
+{"schema":"forge-line.endpoint/v1","built_at":"2026-10-05T20:08:06Z","cells":1,"segments":{"6|5482|871|wkd_pm":{"n":3,"mean_s":594.0,"p50_s":584.7,"p90_s":892.3,"dist_m":409.2}}}
