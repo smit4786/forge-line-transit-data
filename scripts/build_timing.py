@@ -290,7 +290,11 @@ def main():
                             secs = (pts - parse_ts(st["anchor_t"])).total_seconds()
                         except ValueError:
                             secs = -1
-                        if 0 < secs <= MAX_GAP_S:
+                        # Ghost routes (unknown route_id, matched against the
+                        # global stop list) must not produce timing cells: the
+                        # attribution is unreliable. The anchor still moves so
+                        # detector state stays sane.
+                        if not ghost and 0 < secs <= MAX_GAP_S:
                             seg_dist = haversine(anchor_stop["lat"], anchor_stop["lon"], ns["lat"], ns["lon"]) if anchor_stop else None
                             emit("segment.traversed", vid, route, now_utc, polled_at,
                                  observed_at=obs_at, received_at=polled_at,
