@@ -93,6 +93,27 @@ def nearest_stop(lat, lon, stops):
     return best, best_d
 
 
+def write_latest():
+    """data/latest.json: the single most recent poll, for instant page paint
+    and as a lightweight "last known positions" fallback. Rebuilt from the
+    newest raw poll file on every run (the old log_poll.py wrote this inline;
+    build_timing.py owns it now that polling moved to the Netlify logger)."""
+    newest = None
+    for p in sorted(DATA.glob("20*.jsonl")):
+        newest = p
+    if newest is None:
+        return
+    last = None
+    with open(newest) as fh:
+        for line in fh:
+            line = line.strip()
+            if line:
+                last = line
+    if last:
+        with open(DATA / "latest.json", "w") as out:
+            out.write(last if last.endswith("\n") else last + "\n")
+
+
 def main():
     with open(REF) as f:
         route_stops = json.load(f)
@@ -356,6 +377,7 @@ def main():
     with open(WATERMARK, "w") as f:
         json.dump(wm, f, separators=(",", ":"))
         f.write("\n")
+    write_latest()
     print(f"processed polls; new events: {new_events}; timing cells: {len(model)}")
 
 
