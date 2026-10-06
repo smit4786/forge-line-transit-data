@@ -34,6 +34,11 @@ jobs:
         run: python scripts/build_timing.py
 
       - name: Commit timing outputs
+        # The Netlify logger pushes every 5 min; a push that lands mid-build
+        # makes a plain `git push` fail (non-fast-forward). Rebase onto the
+        # new tip before pushing. Processing is watermark-idempotent, so a
+        # rebased build never double-counts; the next triggered run catches
+        # up any raw polls that arrived during the rebase window.
         run: |
           git config user.name 'forge-line-logger'
           git config user.email 'forge-line-logger@users.noreply.github.com'
@@ -42,5 +47,7 @@ jobs:
             echo 'no new timing data to commit'
           else
             git commit -m 'timing build [skip ci]'
-            git push
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
           fi
