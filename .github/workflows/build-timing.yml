@@ -39,15 +39,37 @@ jobs:
         # new tip before pushing. Processing is watermark-idempotent, so a
         # rebased build never double-counts; the next triggered run catches
         # up any raw polls that arrived during the rebase window.
+        # 2026-10-06: the rebase itself can CONFLICT when the logger appends
+        # to the same data files mid-build (observed: segments.json +
+        # events.jsonl). On conflict: abort, rebuild on the new tip
+        # (idempotent), and retry the push. Three attempts, then fail loud.
         run: |
           git config user.name 'forge-line-logger'
           git config user.email 'forge-line-logger@users.noreply.github.com'
-          git add data/
-          if git diff --cached --quiet; then
-            echo 'no new timing data to commit'
-          else
-            git commit -m 'timing build [skip ci]'
+          for attempt in 1 2 3; do
+            git add data/
+            if git diff --cached --quiet; then
+              if [ "$(git rev-list --count origin/main..HEAD)" -eq 0 ]; then
+                echo 'no new timing data to commit'
+                exit 0
+              fi
+              # Unpushed commit from a raced push: rebase and retry below.
+            else
+              git commit -m 'timing build [skip ci]'
+            fi
             git fetch origin main
-            git rebase origin/main
-            git push origin HEAD:main
-          fi
+            if ! git rebase origin/main; then
+              echo "rebase conflict (attempt $attempt): rebuilding on new tip"
+              git rebase --abort
+              git reset --hard origin/main
+              python scripts/build_timing.py
+              continue
+            fi
+            if git push origin HEAD:main; then
+              echo "pushed on attempt $attempt"
+              exit 0
+            fi
+            echo "push raced (attempt $attempt); retrying"
+          done
+          echo 'failed to push after 3 attempts' >&2
+          exit 1
