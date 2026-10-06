@@ -1,0 +1,46 @@
+name: Build timing model
+
+# Primary trigger: the Netlify 5-min logger commits raw poll files via PAT.
+# Push triggers are reliable; the old every-5-min cron often never fired.
+# A 30-min cron remains as a fallback so a missed push still gets processed.
+on:
+  push:
+    paths:
+      - 'data/20*.jsonl'
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Fallback poller: only on the cron path, in case the Netlify logger
+      # is ever down. Never on push (Netlify just wrote the data).
+      - name: Fallback poll (schedule only)
+        if: github.event_name == 'schedule'
+        run: python scripts/log_poll.py
+
+      - name: Build endpoint events and timing model
+        run: python scripts/build_timing.py
+
+      - name: Commit timing outputs
+        run: |
+          git config user.name 'forge-line-logger'
+          git config user.email 'forge-line-logger@users.noreply.github.com'
+          git add data/
+          if git diff --cached --quiet; then
+            echo 'no new timing data to commit'
+          else
+            git commit -m 'timing build [skip ci]'
+            git push
+          fi
