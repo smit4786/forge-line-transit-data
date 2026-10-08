@@ -1,6 +1,6 @@
 {
   "schema": "forge-line.telemetry/v1",
-  "index_updated_at": "2026-10-08T16:43:27Z",
+  "index_updated_at": "2026-10-08T21:44:12Z",
   "days": [
     {
       "date": "2026-10-03",
@@ -352,8 +352,8 @@
     },
     {
       "date": "2026-10-08",
-      "polls": 3,
-      "vehicle_records": 271,
+      "polls": 4,
+      "vehicle_records": 441,
       "path": "data/2026-10-08.jsonl"
     },
     {
@@ -454,9 +454,39 @@
     },
     {
       "date": "2026-10-08T16",
-      "polls": 9,
-      "vehicle_records": 1192,
+      "polls": 12,
+      "vehicle_records": 1595,
       "path": "data/2026-10-08T16.jsonl"
+    },
+    {
+      "date": "2026-10-08T17",
+      "polls": 12,
+      "vehicle_records": 1652,
+      "path": "data/2026-10-08T17.jsonl"
+    },
+    {
+      "date": "2026-10-08T18",
+      "polls": 12,
+      "vehicle_records": 1787,
+      "path": "data/2026-10-08T18.jsonl"
+    },
+    {
+      "date": "2026-10-08T19",
+      "polls": 12,
+      "vehicle_records": 2085,
+      "path": "data/2026-10-08T19.jsonl"
+    },
+    {
+      "date": "2026-10-08T20",
+      "polls": 12,
+      "vehicle_records": 2110,
+      "path": "data/2026-10-08T20.jsonl"
+    },
+    {
+      "date": "2026-10-08T21",
+      "polls": 9,
+      "vehicle_records": 1577,
+      "path": "data/2026-10-08T21.jsonl"
     }
   ]
 }
