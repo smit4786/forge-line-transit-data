@@ -1,6 +1,6 @@
 {
   "schema": "forge-line.telemetry/v1",
-  "index_updated_at": "2026-10-10T21:01:29Z",
+  "index_updated_at": "2026-10-11T00:17:56Z",
   "days": [
     {
       "date": "2026-10-03",
@@ -784,9 +784,33 @@
     },
     {
       "date": "2026-10-10T21",
-      "polls": 1,
-      "vehicle_records": 137,
+      "polls": 12,
+      "vehicle_records": 1861,
       "path": "data/2026-10-10T21.jsonl"
+    },
+    {
+      "date": "2026-10-10T22",
+      "polls": 12,
+      "vehicle_records": 2239,
+      "path": "data/2026-10-10T22.jsonl"
+    },
+    {
+      "date": "2026-10-10T23",
+      "polls": 12,
+      "vehicle_records": 1397,
+      "path": "data/2026-10-10T23.jsonl"
+    },
+    {
+      "date": "2026-10-11",
+      "polls": 1,
+      "vehicle_records": 92,
+      "path": "data/2026-10-11.jsonl"
+    },
+    {
+      "date": "2026-10-11T00",
+      "polls": 4,
+      "vehicle_records": 406,
+      "path": "data/2026-10-11T00.jsonl"
     }
   ]
 }
